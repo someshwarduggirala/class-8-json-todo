@@ -1,7 +1,8 @@
 from datetime import datetime
+#from copy import deepcopy
 
 from .exceptions import (
-    InvalidTaskStatus, TaskAlreadyDoneException, TaskDoesntExistException)
+   InvalidTaskStatus, TaskAlreadyDoneException, TaskDoesntExistException)
 from .utils import parse_date, parse_int
 
 
@@ -12,7 +13,7 @@ def new():
 def create_task(tasks, name, description=None, due_on=None):
     if due_on and type(due_on) != datetime:
         due_on = parse_date(due_on)
-
+    
     task = {
         'task': name,
         'description': description,
@@ -23,6 +24,10 @@ def create_task(tasks, name, description=None, due_on=None):
 
 
 def list_tasks(tasks, status='all'):
+    
+    if status not in ['pending','done','all']:
+        raise InvalidTaskStatus
+    
     task_list = []
     for idx, task in enumerate(tasks, 1):
         if task['due_on'] is not None:
@@ -39,12 +44,21 @@ def list_tasks(tasks, status='all'):
 
 def complete_task(tasks, name):
     new_tasks = []
-
-    for task in tasks:
-        if name == task['task']:
-            task = task.copy()
-            task['status'] = 'done'
+    id=parse_int(name)
+    found_flag=False
+    
+    for task_id,task in enumerate(tasks,1):
+        if task['task']==name or task_id==id:
+            if task['status'] == 'done':
+                raise TaskAlreadyDoneException
+            task=task.copy()
+            task['status']='done'
+            found_flag=True
         new_tasks.append(task)
-
+        
+    if not found_flag:
+        raise TaskDoesntExistException
+        
     return new_tasks
+    
 
